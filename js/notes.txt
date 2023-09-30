@@ -1,0 +1,2 @@
+KEY PARTIES OF A CROME EXTENSION
+popup.js <----> tab(content script) <----> popup.js <-----> background.js
