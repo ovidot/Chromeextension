@@ -82,7 +82,7 @@ function saveRecordedVideo(blob, videoId) {
 
 // Redirect to a localhost URL for rendering
 function redirectToLocalhost(videoId) {
-  const localhostURL = `https://ovidot-helpmeout.netlify.app/${videoId}`;
+  const localhostURL = `http://localhost:3000/Record`;
 
   // Change the window location to the localhost URL
   window.location.href = localhostURL;
