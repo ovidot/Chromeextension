@@ -20,9 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
       );
     });
   });
-  const landing = () => {
-    window.open(" http://localhost:3000");
-  };
+  const landing = () => {};
   stopVideoButton.addEventListener("click", () => {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       chrome.tabs.sendMessage(

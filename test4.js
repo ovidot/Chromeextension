@@ -8,12 +8,12 @@ var recordedChunks = []; // Array to store the data chunks
 
 function onAccessApproved(stream) {
   // Make an initial API request to start recording and get the video ID
-  fetch("https://hngx-video-chrome-extension.onrender.com/start_video", {
+  fetch("https://hngx-chrome-extension.onrender.com/start_video", {
     method: "POST",
-    // headers: {
-    //   "Content-Type": "application/json",
-    // },
-    // body: JSON.stringify({}),
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
   })
     .then((response) => response.json())
     .then((data) => {
@@ -22,7 +22,6 @@ function onAccessApproved(stream) {
 
       recorder = new MediaRecorder(stream);
       recorder.start();
-      console.log("started recoeder");
 
       recorder.onstop = function () {
         stream.getTracks().forEach(function (track) {
@@ -30,19 +29,16 @@ function onAccessApproved(stream) {
             track.stop();
           }
         });
-        console.log("available video id = ", videoId);
 
         // Create a blob from the recorded data chunks
         const recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
-        console.log("recorded chunk", recordedChunks);
 
         // Save the recorded video to the API endpoint
         saveRecordedVideo(recordedBlob, videoId);
-        console.log("recorded chunk", recordedChunks);
         recordedChunks = []; // Clear the array
 
         // Redirect to a localhost URL for rendering or perform other actions
-        redirectToLocalhost(videoId);
+        redirectToLocalhost();
       };
 
       recorder.ondataavailable = function (event) {
@@ -59,15 +55,12 @@ function onAccessApproved(stream) {
 // Save the video blob to the API endpoint
 function saveRecordedVideo(blob, videoId) {
   const formData = new FormData();
-  formData.append("video", blob, "screen-recording.mp4"); // Video is the field name
+  formData.append("video", blob, "screen-recording.webm"); // Video is the field name
 
-  fetch(
-    `https://hngx-video-chrome-extension.onrender.com//update_video/${videoId}`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  )
+  fetch(`https://hngx-chrome-extension.onrender.com/update_video/${videoId}`, {
+    method: "POST",
+    body: formData,
+  })
     .then((response) => {
       if (response.ok) {
         console.log("Video successfully sent to API");
@@ -81,8 +74,9 @@ function saveRecordedVideo(blob, videoId) {
 }
 
 // Redirect to a localhost URL for rendering
-function redirectToLocalhost(videoId) {
-  const localhostURL = `https://ovidot-helpmeout.netlify.app/${videoId}`;
+function redirectToLocalhost() {
+  // Replace 'http://localhost:3000/videoPlayback' with your desired localhost URL
+  const localhostURL = `http://localhost:3000/Videorepo/${videoId}`;
 
   // Change the window location to the localhost URL
   window.location.href = localhostURL;
