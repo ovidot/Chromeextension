@@ -1,14 +1,40 @@
 console.log("Hi, I have been injected");
 
-var recorder = null;
-var videoId = null; // Variable to store the video ID
+var recorder;
+var videoId; // Variable to store the video ID
 var recordedChunks = []; // Array to store the data chunks
 
 //https://hngx-chrome-extension.onrender.com/
 
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "request_recording") {
+    console.log("Requesting recording permission");
+
+    sendResponse(`processed: ${message.action}`);
+
+    // Request the browser to grant permission for recording feature
+    navigator.mediaDevices
+      .getDisplayMedia({
+        audio: true,
+        video: true,
+      })
+      .then((stream) => {
+        onAccessApproved(stream);
+      });
+  }
+
+  if (message.action === "stopvideo") {
+    console.log("Stopping video");
+    sendResponse(`processed: ${message.action}`);
+    if (!recorder) return console.log("No recorder");
+
+    recorder.stop();
+  }
+});
+
 function onAccessApproved(stream) {
   // Make an initial API request to start recording and get the video ID
-  fetch("https://hngx-video-chrome-extension.onrender.com/start_video", {
+  fetch("http://127.0.0.1:5000/start_video", {
     method: "POST",
     // headers: {
     //   "Content-Type": "application/json",
@@ -18,37 +44,45 @@ function onAccessApproved(stream) {
     .then((response) => response.json())
     .then((data) => {
       videoId = data.video_id; // Store the received video ID
-      console.log("Video recording started with ID:", videoId);
+      console.log("Video recording created with ID:", videoId);
 
-      recorder = new MediaRecorder(stream);
-      recorder.start();
-      console.log("started recoeder");
+      recorder = new MediaRecorder(stream, {
+        mimeType: "video/webm; codecs=vp8",
+      });
+      recorder.start(3000);
+      console.log("started recorder");
 
-      recorder.onstop = function () {
+      recorder.ondataavailable = function (event) {
+        console.log(event.data.size);
+        if (event.data.size > 0) {
+          recordedChunks.push(event.data);
+          console.log(recordedChunks);
+        }
+      };
+
+      recorder.onstop = () => {
+        console.log("available video id = ", videoId);
         stream.getTracks().forEach(function (track) {
           if (track.readyState === "live") {
             track.stop();
           }
         });
-        console.log("available video id = ", videoId);
+        recording = false;
 
         // Create a blob from the recorded data chunks
-        const recordedBlob = new Blob(recordedChunks, { type: "video/webm" });
-        console.log("recorded chunk", recordedChunks);
+        const blob = new Blob(recordedChunks, {
+          type: "video/webm; codecs=vp8",
+        });
+        // blobUrl = URL.createObjectURL(blob);
+        window.open(URL.createObjectURL(blob), "_blank");
+        console.log("recorded chunk", recordedChunks, "blob", blob);
 
         // Save the recorded video to the API endpoint
-        saveRecordedVideo(recordedBlob, videoId);
-        console.log("recorded chunk", recordedChunks);
+        saveRecordedVideo(blob, videoId);
         recordedChunks = []; // Clear the array
 
         // Redirect to a localhost URL for rendering or perform other actions
-        redirectToLocalhost(videoId);
-      };
-
-      recorder.ondataavailable = function (event) {
-        if (event.data.size > 0) {
-          recordedChunks.push(event.data);
-        }
+        // redirectToLocalhost(videoId);
       };
     })
     .catch((error) => {
@@ -59,15 +93,12 @@ function onAccessApproved(stream) {
 // Save the video blob to the API endpoint
 function saveRecordedVideo(blob, videoId) {
   const formData = new FormData();
-  formData.append("video", blob, "screen-recording.mp4"); // Video is the field name
+  formData.append("video", blob, "screen-recording"); // Video is the field name
 
-  fetch(
-    `https://hngx-video-chrome-extension.onrender.com//update_video/${videoId}`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  )
+  fetch(`http://127.0.0.1:5000/update_video/${videoId}`, {
+    method: "POST",
+    body: formData,
+  })
     .then((response) => {
       if (response.ok) {
         console.log("Video successfully sent to API");
@@ -87,34 +118,3 @@ function redirectToLocalhost(videoId) {
   // Change the window location to the localhost URL
   window.location.href = localhostURL;
 }
-
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "request_recording") {
-    console.log("Requesting recording permission");
-
-    sendResponse(`processed: ${message.action}`);
-
-    // Request the browser to grant permission for recording feature
-    navigator.mediaDevices
-      .getDisplayMedia({
-        audio: true,
-        video: {
-          width: 9999999999,
-          height: 9999999999,
-        },
-      })
-      .then((stream) => {
-        onAccessApproved(stream);
-      });
-  }
-
-  if (message.action === "stopvideo") {
-    console.log("Stopping video");
-    sendResponse(`processed: ${message.action}`);
-    if (!recorder) {
-      return console.log("No recorder");
-    } else {
-      recorder.stop();
-    }
-  }
-});

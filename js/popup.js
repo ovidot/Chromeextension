@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", () => {
       );
     });
   });
-  const landing = () => {};
+
   stopVideoButton.addEventListener("click", () => {
     chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       chrome.tabs.sendMessage(
@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
         function (response) {
           if (!chrome.runtime.lastError) {
             console.log(response);
-            landing();
           } else {
             console.log(chrome.runtime.lastError, "error line 30");
           }
