@@ -34,7 +34,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 function onAccessApproved(stream) {
   // Make an initial API request to start recording and get the video ID
-  fetch("http://127.0.0.1:5000/start_video", {
+  fetch("https://ovidotvideo.onrender.com/start_video", {
     method: "POST",
     // headers: {
     //   "Content-Type": "application/json",
@@ -74,7 +74,7 @@ function onAccessApproved(stream) {
           type: "video/webm; codecs=vp8",
         });
         // blobUrl = URL.createObjectURL(blob);
-        window.open(URL.createObjectURL(blob), "_blank");
+
         console.log("recorded chunk", recordedChunks, "blob", blob);
 
         // Save the recorded video to the API endpoint
@@ -82,7 +82,7 @@ function onAccessApproved(stream) {
         recordedChunks = []; // Clear the array
 
         // Redirect to a localhost URL for rendering or perform other actions
-        // redirectToLocalhost(videoId);
+        redirectToLocalhost(videoId);
       };
     })
     .catch((error) => {
@@ -95,7 +95,7 @@ function saveRecordedVideo(blob, videoId) {
   const formData = new FormData();
   formData.append("video", blob, "screen-recording"); // Video is the field name
 
-  fetch(`http://127.0.0.1:5000/update_video/${videoId}`, {
+  fetch(`https://ovidotvideo.onrender.com/update_video/${videoId}`, {
     method: "POST",
     body: formData,
   })
@@ -113,8 +113,8 @@ function saveRecordedVideo(blob, videoId) {
 
 // Redirect to a localhost URL for rendering
 function redirectToLocalhost(videoId) {
-  const localhostURL = `https://ovidot-helpmeout.netlify.app/Record`;
+  const localhostURL = `https://helpmeout-seven.vercel.app/Record/${videoId}?videoId=${videoId}`;
 
   // Change the window location to the localhost URL
-  window.location.href = localhostURL;
+  window.open(localhostURL, "_blank");
 }
