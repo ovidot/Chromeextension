@@ -49,7 +49,7 @@ function onAccessApproved(stream) {
       recorder = new MediaRecorder(stream, {
         mimeType: "video/webm; codecs=vp8",
       });
-      recorder.start(3000);
+      recorder.start(5000);
       console.log("started recorder");
 
       recorder.ondataavailable = function (event) {
@@ -67,7 +67,6 @@ function onAccessApproved(stream) {
             track.stop();
           }
         });
-        recording = false;
 
         // Create a blob from the recorded data chunks
         const blob = new Blob(recordedChunks, {
